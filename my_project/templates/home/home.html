@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Tables</h1>
+    <h2>Перечень патентов, полученных в 20____-20___ годы</h2>
+    <a href="{% url 'create_table' %}" class="btn">Таблица №20</a>
+    <h2>Перечень патентов, полученных в 20____-20___ годы</h2>
+    <a href="{% url 'create_table23' %}" class="btn">Таблица №23</a>
+    <h2>Перечень патентов, полученных в 20____-20___ годы</h2>
+    <a href="{% url 'create_table26' %}" class="btn">Таблица №26</a>
+    <h2>Выгрузить данные в word</h2>
+    <a href="{% url 'export_data_to_word' %}" class="btn">Export Data to Word</a>
+</body>
+</html>
