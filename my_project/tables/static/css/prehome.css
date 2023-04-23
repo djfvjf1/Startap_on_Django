@@ -1,25 +1,12 @@
-h1{
+.home{
     text-align: center;
 }
-
-.all{
-    margin-left: 10px;
-}
-
 .btn {
-    border: 1px solid black;
-    border-radius: 10px;
     display: inline-block; /* Строчно-блочный элемент */
     background: #ff0000; /* Серый цвет фона */
     color: #fff; /* Белый цвет текста */
     padding: 1rem 1.5rem; /* Поля вокруг текста */
     text-decoration: none; /* Убираем подчёркивание */
+    border-radius: 10px; /* Скругляем уголки */
+    font-size: 20px;
    }
-
-.head{
-    text-align: right;
-}
-
-.foot{
-    font-size: 30px;
-}

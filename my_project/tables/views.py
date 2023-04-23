@@ -1,7 +1,12 @@
 from io import BytesIO
 
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views.generic.edit import CreateView
 from docx import Document
 
 from .forms import NameForm, NameForm23, NameForm26
@@ -11,6 +16,8 @@ from .models import Table, Table23, Table26
 def home(request):
     return render(request, "home/home.html", {'home': home})
 
+def prehome(request):
+    return render(request, "home/prehome.html", {"prehome": prehome})
 
 # Таблица №20
 def new_form(request):
@@ -22,7 +29,7 @@ def new_form(request):
             #form.save(commit=False)
             form.author = request.user
             table = form.save()
-            return redirect('/tables/table/' + str(table.id) + '/')
+            return redirect('/table/' + str(table.id) + '/')
     else:
         form = NameForm()
      
@@ -44,7 +51,7 @@ def new_form23(request):
             #form.save(commit=False)
             form.subject = request.user
             table = form.save()
-            return redirect('/tables/table23/' + str(table.id) + '/')
+            return redirect('/table23/' + str(table.id) + '/')
     else:
         form = NameForm23()
      
@@ -66,7 +73,7 @@ def new_form26(request):
             #form.save(commit=False)
             form.organisation = request.user
             table = form.save()
-            return redirect('/tables/table26/' + str(table.id) + '/')
+            return redirect('/table26/' + str(table.id) + '/')
     else:
         form = NameForm26()
      
@@ -90,15 +97,19 @@ def export_data_to_word(request):
     # Таблица №20
 
     # Get your queryset of data
+
+    document.add_paragraph('Table 1', style='Heading 1')
+
     queryset = Table.objects.all()
 
     # Add a table to the document with headers
     table = document.add_table(rows=2, cols=4)
     hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Column 1 Header'
-    hdr_cells[1].text = 'Column 2 Header'
-    hdr_cells[2].text = 'Column 3 Header'
-    hdr_cells[3].text = 'Column 4 Header'
+    table.style = 'Table Grid'
+    hdr_cells[0].text = 'Ф.И.О. автора'
+    hdr_cells[1].text = '№ патента'
+    hdr_cells[2].text = 'Год выдачи'
+    hdr_cells[3].text = 'Название'
     
 
     # Add data rows to the table
@@ -108,7 +119,7 @@ def export_data_to_word(request):
         row_cells[1].text = str(obj.patent)
         row_cells[2].text = str(obj.year)
         row_cells[3].text = str(obj.title)
-
+    document.add_paragraph('Table 1', style='Heading 1')
 
     # Таблица №23
 
@@ -118,14 +129,15 @@ def export_data_to_word(request):
     # Add a table to the document with headers
     table23 = document.add_table(rows=2, cols=6)
     hdr_cells23 = table23.rows[0].cells
-    hdr_cells23[0].text = 'Column 1 Header'
-    hdr_cells23[1].text = 'Column 2 Header'
-    hdr_cells23[2].text = 'Column 3 Header'
-    hdr_cells23[3].text = 'Column 4 Header'
-    hdr_cells23[4].text = 'Column 4 Header'
-    hdr_cells23[5].text = 'Column 4 Header'
+    table23.style = 'Table Grid'
+    hdr_cells23[0].text = 'Предмет международного договора или проекта'
+    hdr_cells23[1].text = 'Наименование учебного заведения-партнера'
+    hdr_cells23[2].text = 'Дата заключения проектов и/илидоговоров'
+    hdr_cells23[3].text = 'дата начала'
+    hdr_cells23[4].text = 'дата окончания'
+    hdr_cells23[5].text = 'Фактическое наличие на момент проф. контроля'
     
-
+    document.add_paragraph('Table 1', style='Heading 1')
     # Add data rows to the table
     for obj in queryset23:
         row_cells23 = table23.add_row().cells
@@ -145,11 +157,12 @@ def export_data_to_word(request):
     # Add a table to the document with headers
     table26 = document.add_table(rows=2, cols=5)
     hdr_cells26 = table26.rows[0].cells
-    hdr_cells26[0].text = 'Column 1 Header'
-    hdr_cells26[1].text = 'Column 2 Header'
-    hdr_cells26[2].text = 'Column 3 Header'
-    hdr_cells26[3].text = 'Column 4 Header'
-    hdr_cells26[4].text = 'Column 4 Header'
+    table26.style = 'Table Grid'
+    hdr_cells26[0].text = 'Организация'
+    hdr_cells26[1].text = 'Предмет Соглашения или договора'
+    hdr_cells26[2].text = 'На какие направления подготовки/специальности распространяется действие договора'
+    hdr_cells26[3].text = 'Дата подписания'
+    hdr_cells26[4].text = 'Сроки действия договора'
     
 
     # Add data rows to the table
@@ -158,7 +171,7 @@ def export_data_to_word(request):
         row_cells26[0].text = str(obj.organisation)
         row_cells26[1].text = str(obj.subject_of_contract)
         row_cells26[2].text = str(obj.directon_of_speciality)
-        row_cells26[3].text = str(obj.date)
+        row_cells26[3].text = str(obj.date_of_conclusion_of_the_contract)
         row_cells26[4].text = str(obj.terms_of_the_contract)
 
        
@@ -170,3 +183,30 @@ def export_data_to_word(request):
     # Save the Word document to the response
     document.save(response)
     return response
+
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            return render(request, 'login\login.html', {'error_message': 'Invalid login'})
+    else:
+        return render(request, 'login\login.html')
+
+@login_required
+def profile_view(request):
+    return render(request, 'login\profile.html', {'user': request.user})
+
+def logout_view(request):
+    logout(request)
+    return redirect('prehome')
+
+class SignUpView(CreateView):
+    form_class = UserCreationForm
+    success_url = reverse_lazy('login')
+    template_name = 'login\signup.html'
